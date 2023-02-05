@@ -1,0 +1,2241 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <allegro5\allegro.h>
+#include <allegro5\allegro_image.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_ttf.h>
+
+
+int black_hole_sw[2];
+int chance_home_sw[6];
+char chance_count[8][2];
+
+
+struct button { int x1, y1, x2, y2; };
+
+
+int area(struct button* btn, ALLEGRO_MOUSE_STATE* state)
+{
+	if (state->x > btn->x1 && state->x < btn->x2 && state->y > btn->y1 && state->y < btn->y2) return 1;
+	return 0;
+}
+
+int line(int y) {
+	if (y == 830 || y == 638 || y == 446 || y == 254 || y == 62)  return 1;
+	if (y == 734 || y == 542 || y == 350 || y == 158)             return 0;
+}
+
+int tas(int* previous_a, int* two_a_before)
+{
+	srand(time(NULL));
+	int a = rand() % 6;
+
+	while (a == *previous_a && a == *two_a_before)
+	{
+		srand(time(NULL));
+		a = rand() % 6;
+	}
+
+	*two_a_before = *previous_a;
+	*previous_a = a;
+
+	if (a == 0) return 3;
+	if (a == 1) return 2;
+	if (a == 2) return 1;
+	if (a == 3) return -1;
+	if (a == 4) return -2;
+	if (a == 5) return -3;
+}
+
+int set_str_tas(char string[], int tas_number, int coef)
+{
+	if (coef == 1) {
+		if (tas_number == 3) { string[0] = '+'; string[1] = '3'; }
+		if (tas_number == 2) { string[0] = '+'; string[1] = '2'; }
+		if (tas_number == 1) { string[0] = '+'; string[1] = '1'; }
+		if (tas_number == -1) { string[0] = '-'; string[1] = '1'; }
+		if (tas_number == -2) { string[0] = '-'; string[1] = '2'; }
+		if (tas_number == -3) { string[0] = '-'; string[1] = '3'; }
+		string[3] = '\0';
+	}
+	if (coef == 2) {
+		if (tas_number == 3) { string[0] = '+'; string[1] = '6'; }
+		if (tas_number == 2) { string[0] = '+'; string[1] = '4'; }
+		if (tas_number == 1) { string[0] = '+'; string[1] = '2'; }
+		if (tas_number == -1) { string[0] = '-'; string[1] = '2'; }
+		if (tas_number == -2) { string[0] = '-'; string[1] = '4'; }
+		if (tas_number == -3) { string[0] = '-'; string[1] = '6'; }
+		string[3] = '\0';
+	}
+
+	return 0;
+}
+
+int chance_card(int color, int* tocc)
+{
+	srand(time(NULL));
+	int a = rand() % 4;
+
+	if (color == 1) if (chance_count[a][0] < '9') chance_count[a][0] += 1;
+	if (color == 2) if (chance_count[a + 4][0] < '9') chance_count[a + 4][0] += 1;
+
+	*tocc = 0;
+	return 0;
+}
+
+int check_chance(struct button btn)
+{
+	if (btn.x1 == 310 + 1 * 120 && btn.y1 == 830 - 1 * 96) { chance_home_sw[0] = 1; return 1; }//home 17
+	if (btn.x1 == 310 + 7 * 120 && btn.y1 == 830 - 7 * 96) { chance_home_sw[1] = 1; return 1; }//home 65
+	if (btn.x1 == 310 + 5 * 120 && btn.y1 == 830 - 3 * 96) { chance_home_sw[2] = 1; return 1; }//home 31
+	if (btn.x1 == 310 + 3 * 120 && btn.y1 == 830 - 5 * 96) { chance_home_sw[3] = 1; return 1; }//home 51
+	if (btn.x1 == 310 + 6 * 120 && btn.y1 == 830 - 0 * 96) { chance_home_sw[4] = 1; return 1; }//home 6
+	if (btn.x1 == 310 + 2 * 120 && btn.y1 == 830 - 8 * 96) { chance_home_sw[5] = 1; return 1; }//home 76
+
+	return 0;
+}
+
+int check_coordinates(struct button btn)
+{
+	//return 1 means up
+	//return 0 means down
+	if (btn.x1 == 310 + 8 * 120 && btn.y1 == 830 - 0 * 96) return 1; //home 9
+	if (btn.x1 == 310 + 8 * 120 && btn.y1 == 830 - 2 * 96) return 1; //home 27
+	if (btn.x1 == 310 + 8 * 120 && btn.y1 == 830 - 4 * 96) return 1; //home 45
+	if (btn.x1 == 310 + 8 * 120 && btn.y1 == 830 - 6 * 96) return 1; //home 63
+	if (btn.x1 == 310 + 0 * 120 && btn.y1 == 830 - 3 * 96) return 1; //home 36
+	if (btn.x1 == 310 + 0 * 120 && btn.y1 == 830 - 1 * 96) return 1; //home 18
+	if (btn.x1 == 310 + 0 * 120 && btn.y1 == 830 - 5 * 96) return 1; //home 54
+	if (btn.x1 == 310 + 0 * 120 && btn.y1 == 830 - 7 * 96) return 1; //home 72
+
+	if (btn.x1 == 310 + 8 * 120 && btn.y1 == 830 - 1 * 96) return 0; //home 10
+	if (btn.x1 == 310 + 8 * 120 && btn.y1 == 830 - 3 * 96) return 0; //home 28
+	if (btn.x1 == 310 + 8 * 120 && btn.y1 == 830 - 5 * 96) return 0; //home 46
+	if (btn.x1 == 310 + 8 * 120 && btn.y1 == 830 - 7 * 96) return 0; //home 64
+	if (btn.x1 == 310 + 0 * 120 && btn.y1 == 830 - 2 * 96) return 0; //home 19
+	if (btn.x1 == 310 + 0 * 120 && btn.y1 == 830 - 4 * 96) return 0; //home 37
+	if (btn.x1 == 310 + 0 * 120 && btn.y1 == 830 - 6 * 96) return 0; //home 55
+	if (btn.x1 == 310 + 0 * 120 && btn.y1 == 830 - 8 * 96) return 0; //home 73
+}
+
+int change_f_color(struct button* btn)
+{
+	if (btn->x1 == 310 + 3 * 120 && btn->y1 == 830 - 7 * 96) return 1;
+	if (btn->x1 == 310 + 5 * 120 && btn->y1 == 830 - 1 * 96) return 1;
+	if (btn->x1 == 310 + 1 * 120 && btn->y1 == 830 - 3 * 96) return 1;
+	if (btn->x1 == 310 + 7 * 120 && btn->y1 == 830 - 5 * 96) return 1;
+	if (btn->x1 == 310 + 0 * 120 && btn->y1 == 830 - 0 * 96) return 1;
+	if (btn->x1 == 310 + 8 * 120 && btn->y1 == 830 - 8 * 96) return 1;
+
+	return 0;
+}
+
+int teleport(struct button* btn, int* key)
+{
+
+	if (btn->x1 == 310 + 3 * 120 && btn->y1 == 830 - 7 * 96)
+	{
+		btn->x1 = 310 + 1 * 120;
+		btn->y1 = 830 - 3 * 96;
+		*key = 0;
+		black_hole_sw[0] = 1;
+		return 1;
+	}//6935
+
+	if (btn->x1 == 310 + 5 * 120 && btn->y1 == 830 - 1 * 96)
+	{
+		btn->x1 = 310 + 7 * 120;
+		btn->y1 = 830 - 5 * 96;
+		*key = 0;
+		black_hole_sw[1] = 1;
+		return 1;
+	}//1347
+
+	if (btn->x1 == 310 + 1 * 120 && btn->y1 == 830 - 3 * 96)
+	{
+		btn->x1 = 310 + 3 * 120;
+		btn->y1 = 830 - 7 * 96;
+		*key = 0;
+		black_hole_sw[0] = 1;
+		return 1;
+	}//6935
+
+	if (btn->x1 == 310 + 7 * 120 && btn->y1 == 830 - 5 * 96)
+	{
+		btn->x1 = 310 + 5 * 120;
+		btn->y1 = 830 - 1 * 96;
+		*key = 0;
+		black_hole_sw[1] = 1;
+		return 1;
+	}//1347
+
+
+	return 0;
+}
+
+int middle(struct button btn)
+{
+	if (btn.x1 == 310 + 4 * 120 && btn.y1 == 830 - 4 * 96) return 1;
+
+	return 0;
+}
+
+int check_1_81(struct button btn, int tas_number)
+{
+	if (btn.y1 == 830 - 0 * 96) if (btn.x1 + tas_number * 120 < 310 + 0 * 120) return 1;
+	if (btn.y1 == 830 - 8 * 96) if (btn.x1 + tas_number * 120 > 310 + 8 * 120) return 1;
+	return 0;
+}
+
+int attack(struct button* btn1, struct button* btn2, struct button* btn3, int color)
+{
+	struct button temp2 = *btn2;
+	struct button temp3 = *btn3;
+
+	if (color == 1) {
+		if (btn1->x1 == btn2->x1 && btn1->y1 == btn2->y1) if (middle(temp2) == 0) { btn2->x1 = 310 + 8 * 120; btn2->y1 = 830 - 8 * 96; }
+		if (btn1->x1 == btn3->x1 && btn1->y1 == btn3->y1) if (middle(temp3) == 0) { btn3->x1 = 310 + 8 * 120; btn3->y1 = 830 - 8 * 96; }
+		return 1;
+	}
+
+	if (color == 2) {
+		if (btn1->x1 == btn2->x1 && btn1->y1 == btn2->y1) if (middle(temp2) == 0) { btn2->x1 = 310 + 0 * 120; btn2->y1 = 830 - 0 * 96; }
+		if (btn1->x1 == btn3->x1 && btn1->y1 == btn3->y1) if (middle(temp3) == 0) { btn3->x1 = 310 + 0 * 120; btn3->y1 = 830 - 0 * 96; }
+		return 1;
+	}
+
+
+	return 0;
+}
+
+
+
+
+int main()
+{
+	FILE* saved_game;
+
+	ALLEGRO_DISPLAY* display;
+	ALLEGRO_EVENT_QUEUE* queue;
+	ALLEGRO_TIMER* timer;
+
+	ALLEGRO_KEYBOARD_STATE keyboard_state;
+	ALLEGRO_MOUSE_STATE mouse_state;
+
+	ALLEGRO_FONT* font_of_first_page;
+	ALLEGRO_FONT* font_of_inside_menu;
+	ALLEGRO_FONT* font_of_players;
+	ALLEGRO_FONT* font_of_chance_card;
+
+	ALLEGRO_COLOR font_color;
+	ALLEGRO_COLOR font_color2;
+
+	ALLEGRO_COLOR color_1;
+	ALLEGRO_COLOR color_2;
+	ALLEGRO_COLOR tas_color_1;
+	ALLEGRO_COLOR tas_color_2;
+
+	ALLEGRO_BITMAP* first_page = NULL;
+	ALLEGRO_BITMAP* board = NULL;
+	ALLEGRO_BITMAP* menu = NULL;
+
+	ALLEGRO_BITMAP* inside_menu = NULL;
+	ALLEGRO_BITMAP* black_hole = NULL;
+	ALLEGRO_BITMAP* card = NULL;
+	ALLEGRO_BITMAP* web = NULL;
+	ALLEGRO_BITMAP* end = NULL;
+	ALLEGRO_BITMAP* win = NULL;
+
+	ALLEGRO_BITMAP* ettehad = NULL;
+	ALLEGRO_BITMAP* load_p_1 = NULL;
+	ALLEGRO_BITMAP* load_p_2 = NULL;
+
+	//p_matau--->means player matau
+
+	ALLEGRO_BITMAP* p_matau = NULL;
+	ALLEGRO_BITMAP* p_nokama = NULL;
+	ALLEGRO_BITMAP* p_nuju = NULL;
+	ALLEGRO_BITMAP* p_onewa = NULL;
+	ALLEGRO_BITMAP* p_vakama = NULL;
+	ALLEGRO_BITMAP* p_whenua = NULL;
+
+	ALLEGRO_BITMAP* matoran_matau = NULL;
+	ALLEGRO_BITMAP* matoran_nokama = NULL;
+	ALLEGRO_BITMAP* matoran_nuju = NULL;
+	ALLEGRO_BITMAP* matoran_onewa = NULL;
+	ALLEGRO_BITMAP* matoran_vakama = NULL;
+	ALLEGRO_BITMAP* matoran_whenua = NULL;
+
+	ALLEGRO_BITMAP* matau = NULL;
+	ALLEGRO_BITMAP* nokama = NULL;
+	ALLEGRO_BITMAP* nuju = NULL;
+	ALLEGRO_BITMAP* onewa = NULL;
+	ALLEGRO_BITMAP* vakama = NULL;
+	ALLEGRO_BITMAP* whenua = NULL;
+
+	ALLEGRO_BITMAP* player_11 = NULL;
+	ALLEGRO_BITMAP* player_12 = NULL;
+	ALLEGRO_BITMAP* player_21 = NULL;
+	ALLEGRO_BITMAP* player_22 = NULL;
+
+	ALLEGRO_BITMAP* matoran_1 = NULL;
+	ALLEGRO_BITMAP* matoran_2 = NULL;
+
+	ALLEGRO_BITMAP* warning = NULL;
+
+
+	al_init();
+
+	display = al_create_display(1700, 980);
+	queue = al_create_event_queue();
+	timer = al_create_timer(1.0 / 60);
+
+	al_install_mouse();
+	al_register_event_source(queue, al_get_mouse_event_source());
+
+	al_install_keyboard();
+	al_register_event_source(queue, al_get_keyboard_event_source());
+	al_register_event_source(queue, al_get_display_event_source(display));
+	al_register_event_source(queue, al_get_timer_event_source(timer));
+
+
+	al_init_image_addon();
+
+	first_page = al_load_bitmap("img/first_page.png");
+	assert(first_page != NULL);
+	board = al_load_bitmap("img/board.png");
+	assert(board != NULL);
+	menu = al_load_bitmap("img/menu.png");
+	assert(menu != NULL);
+	inside_menu = al_load_bitmap("img/inside_menu.png");
+	assert(inside_menu != NULL);
+	warning = al_load_bitmap("img/warning.png");
+	assert(warning != NULL);
+
+	black_hole = al_load_bitmap("img/black_hole.png");
+	assert(black_hole != NULL);
+	card = al_load_bitmap("img/card.png");
+	assert(card != NULL);
+	web = al_load_bitmap("img/web.png");
+	assert(web != NULL);
+	end = al_load_bitmap("img/end.png");
+	assert(end != NULL);
+	win = al_load_bitmap("img/win.png");
+	assert(win != NULL);
+
+	ettehad = al_load_bitmap("img/ettehad.png");
+	assert(ettehad != NULL);
+	load_p_1 = al_load_bitmap("img/load_p_ettehad.png");
+	assert(load_p_1 != NULL);
+	load_p_2 = al_load_bitmap("img/load_p_ettehad.png");
+	assert(load_p_2 != NULL);
+
+
+	p_matau = al_load_bitmap("img/p_matau.png");
+	assert(p_matau != NULL);
+	p_nokama = al_load_bitmap("img/p_nokama.png");
+	assert(p_nokama != NULL);
+	p_nuju = al_load_bitmap("img/p_nuju.png");
+	assert(p_nuju != NULL);
+	p_onewa = al_load_bitmap("img/p_onewa.png");
+	assert(p_onewa != NULL);
+	p_vakama = al_load_bitmap("img/p_vakama.png");
+	assert(p_vakama != NULL);
+	p_whenua = al_load_bitmap("img/p_whenua.png");
+	assert(p_whenua != NULL);
+
+	matoran_matau = al_load_bitmap("img/matoran_matau.png");
+	assert(matoran_matau != NULL);
+	matoran_nokama = al_load_bitmap("img/matoran_nokama.png");
+	assert(matoran_nokama != NULL);
+	matoran_nuju = al_load_bitmap("img/matoran_nuju.png");
+	assert(matoran_nuju != NULL);
+	matoran_onewa = al_load_bitmap("img/matoran_onewa.png");
+	assert(matoran_onewa != NULL);
+	matoran_vakama = al_load_bitmap("img/matoran_vakama.png");
+	assert(matoran_vakama != NULL);
+	matoran_whenua = al_load_bitmap("img/matoran_whenua.png");
+	assert(matoran_whenua != NULL);
+
+	matau = al_load_bitmap("img/Toa_matau.png");
+	assert(matau != NULL);
+	nokama = al_load_bitmap("img/Toa_nokama.png");
+	assert(nokama != NULL);
+	nuju = al_load_bitmap("img/Toa_nuju.png");
+	assert(nuju != NULL);
+	onewa = al_load_bitmap("img/Toa_onewa.png");
+	assert(onewa != NULL);
+	vakama = al_load_bitmap("img/Toa_vakama.png");
+	assert(vakama != NULL);
+	whenua = al_load_bitmap("img/Toa_whenua.png");
+	assert(whenua != NULL);
+
+
+
+
+	font_color = al_map_rgba_f(0, 0, 0, 1);
+	font_color2 = al_map_rgba_f(1, 1, 1, 1);
+
+	int p_code_1 = 1;
+	int p_code_2 = 2;
+
+	int swP = 1;
+	int p_number = 0;             //p ---> means player
+	int topp[3] = { 0 };          //(turn on player photo) in case 9
+	int enter_sw = 0;
+	int p1_ch = 0;				//in case 9 for load_p photos (player 1 chosen)
+	int p2_ch = 0;				//in case 9 for load_p photos (player 2 chosen)
+
+	int i;
+	char str_tas[3];
+
+	char str_p_1[10];
+	char str_p_2[10];
+
+	int board_y = -500;
+	int end_y = -980;
+	int p_matau_y = -480;
+	int p_nokama_y = 1000;
+	int p_nuju_x = 1700;
+	int p_onewa_x = -500;
+	int p_vakama_y = -540;
+	int p_whenua_y = 1200;
+
+	int next_dice_text = 0;
+	int key = 1;
+	int unteleport = 1;
+	int tocc = 1;                 //turn on chance card 
+	int once = 1;
+	int limitation_once = 1;
+
+	int ccbs_p1 = -1;	          //chance card bug solution 		 
+	int ccbs_p2 = -1;	          //chance card bug solution 		 
+
+	int on_the_middle_p11 = 0;
+	int on_the_middle_p12 = 0;
+	int on_the_middle_p21 = 0;
+	int on_the_middle_p22 = 0;
+
+	int p11_flag = 0;
+	int p12_flag = ALLEGRO_FLIP_HORIZONTAL;
+	int p21_flag = 0;
+	int p22_flag = ALLEGRO_FLIP_HORIZONTAL;
+
+	int color = 1;
+	int tas_number = 0;
+	int previous_a = -1;
+	int two_a_before = -2;
+
+	int continue_or_save_sw = 0;
+	int load_file_error = 0;
+	int save_file_error = 0;
+
+	int limit_p11 = 0;
+	int limit_p12 = 0;
+	int limit_p21 = 0;
+	int limit_p22 = 0;
+
+	bool sw_left_botton = false;
+
+	al_init_primitives_addon();
+	al_init_font_addon();
+	al_init_ttf_addon();
+
+	font_of_first_page = al_load_ttf_font("font/text_font.ttf", 64, 100);
+	font_of_inside_menu = al_load_ttf_font("font/text_font.ttf", 48, 100);
+	font_of_players = al_load_ttf_font("font/text_font.ttf", 24, 100);
+	font_of_chance_card = al_load_ttf_font("font/text_font.ttf", 28, 100);
+
+	//ca--->means [c]ase [a]
+
+	struct button c1_continue_botton = { 720, 485, 980, 550 };
+	struct button c1_new_game_botton = { 700, 585, 1000, 650 };
+	struct button c1_quit_botton = { 755, 685, 945, 750 };
+
+	struct button c2_menu_botton = { 40, 45, 85, 90 };
+	struct button c2_tas_botton = { 1500, 845, 1585, 925 };
+
+	struct button c3_one = { 460, 245, 620, 340 };
+	struct button c3_two = { 460, 375, 620, 470 };
+	struct button c3_view_positions = { 330, 505, 620, 555 };
+	struct button c3_cancel = { 330, 590, 620, 640 };
+
+	struct button c4_back = { 50, 860, 250, 925 };
+
+	struct button c5_continue_botton = { 725, 440, 970, 510 };
+	struct button c5_new_game_botton = { 160, 610, 470, 690 };
+	struct button c5_home_botton = { 1350, 610, 1520, 690 };
+
+	struct button c6_resume_botton = { 755, 550, 923, 610 };
+	struct button c6_new_game_botton = { 500, 630, 732, 690 };
+	struct button c6_save_quit_botton = { 950, 630, 1179, 690 };
+
+	struct button c9_p_matau_botton = { 40, 40, 388, 480 };
+	struct button c9_p_nokama_botton = { 410, 40, 758, 480 };
+	struct button c9_p_nuju_botton = { 780, 40, 1128, 480 };
+	struct button c9_p_onewa_botton = { 40, 500, 388, 940 };
+	struct button c9_p_vakama_botton = { 410, 500, 758, 940 };
+	struct button c9_p_whenua_botton = { 780, 500, 1128, 940 };
+	struct button c9_p1_text_botton = { 1320, 75, 1520, 135 };
+	struct button c9_p2_text_botton = { 1320, 535, 1520, 595 };
+	struct button c9_load_p_1_botton = { 1550, 40, 1665, 184 };
+	struct button c9_load_p_2_botton = { 1550, 500, 1665, 644 };
+	struct button c9_change = { 1320, 295, 1520, 355 };
+	struct button c9_back = { 1320, 875, 1665, 940 };
+
+
+	struct button card_0 = { 173, 383, 291, 530 };
+	struct button card_1 = { 173, 576, 291, 722 };
+	struct button card_2 = { 38, 283, 156, 431 };
+	struct button card_3 = { 38, 478, 156, 625 };
+	struct button card_4 = { 1398, 383, 1517, 530 };
+	struct button card_5 = { 1398, 576, 1517, 722 };
+	struct button card_6 = { 1528, 283, 1647, 431 };
+	struct button card_7 = { 1528, 478, 1647, 625 };
+
+
+	struct button player1_botton1 = { 310 + 0 * 120, 830 - 0 * 96, 310 + 1 * 120, 830 + 1 * 96 };
+	struct button player1_botton2 = { 310 + 0 * 120, 830 - 0 * 96, 310 + 1 * 120, 830 + 1 * 96 };
+	struct button player2_botton1 = { 310 + 8 * 120, 830 - 9 * 96, 310 + 9 * 120, 830 - 7 * 96 };
+	struct button player2_botton2 = { 310 + 8 * 120, 830 - 9 * 96, 310 + 9 * 120, 830 - 7 * 96 };
+
+
+	struct button* btn1 = &player1_botton1;			  //////////////////////////////////////////////////////////////////////////
+	struct button* btn2 = &player1_botton1;			  //////////////////////////////////////////////////////////////////////////
+	struct button* btn3 = &player1_botton1;			  //////////////////////////////////////////////////////////////////////////
+	struct button temp;				                  //////////////////////////////////////////////////////////////////////////
+
+	int* flag = p11_flag;						      //////////////////////////////////////////////////////////////////////////
+	int p_m = 0;//player motion		                  //////////////////////////////////////////////////////////////////////////
+
+	int black_hole_bug_solution = 0;		             ////////////////////////////////////////////////////////////////
+
+
+
+
+	bool running = true;
+	al_start_timer(timer);
+	while (running) {
+		ALLEGRO_EVENT event;
+		al_wait_for_event(queue, &event);
+
+		al_get_keyboard_state(&keyboard_state);
+		if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE || al_key_down(&keyboard_state, ALLEGRO_KEY_ESCAPE)) running = false;
+
+
+		if (event.type == ALLEGRO_EVENT_TIMER) {
+			switch (swP)
+			{
+			case 1:
+
+				al_draw_bitmap(first_page, 0, -10, 0);
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c1_continue_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) {
+					continue_or_save_sw = 1;
+					swP = 8;
+				}
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c1_new_game_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) {
+					topp[2] = 1;   //1 means case 1
+					swP = 7;
+				}
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c1_quit_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) exit(0);
+
+				al_draw_text(font_of_first_page, font_color, 735, 480, 0, "Continue");
+				al_draw_text(font_of_first_page, font_color, 702, 580, 0, "New Game");
+				al_draw_text(font_of_first_page, font_color, 800, 680, 0, "Quit");
+
+				if (load_file_error == 1)al_draw_text(font_of_first_page, al_map_rgba(255, 30, 30, 500), 550, 350, 0, "Can not load the game!");
+				if (save_file_error == 1)al_draw_text(font_of_first_page, al_map_rgba(255, 30, 30, 500), 550, 350, 0, "Can not save the game!");
+
+
+				break;
+			case 2:
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c2_menu_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) swP = 6;
+
+				al_clear_to_color(al_map_rgba_f(150, 150, 150, 105));
+				al_draw_rounded_rectangle(0, 0, 1700, 980, 8, 8, font_color, 10);
+
+				if (color == 1) al_draw_filled_rounded_rectangle(1500, 845, 1585, 925, 10, 10, tas_color_1);
+				if (color == 2) al_draw_filled_rounded_rectangle(1500, 845, 1585, 925, 10, 10, tas_color_2);
+				al_draw_rounded_rectangle(1500, 845, 1585, 925, 10, 10, font_color, 5);
+				al_draw_text(font_of_first_page, font_color, 1510, 848, 0, str_tas);
+
+				if (next_dice_text == 1) {
+					al_draw_text(font_of_chance_card, font_color, 1400, 850, 0, "click-->");
+					al_draw_text(font_of_chance_card, font_color, 1400, 885, 0, str_p_1);
+				}
+				if (next_dice_text == 2) {
+					al_draw_text(font_of_chance_card, font_color, 1400, 850, 0, "click-->");
+					al_draw_text(font_of_chance_card, font_color, 1400, 885, 0, str_p_2);
+				}
+
+				al_draw_bitmap(board, 305, board_y += 5, 0);
+				if (board_y > 50) {
+					board_y = 50;
+					al_draw_rounded_rectangle(303.5, 54.5, 1387, 926, 10, 10, font_color, 7);
+				}
+
+				al_draw_bitmap(menu, -130, 10, 0);
+				al_draw_rounded_rectangle(40, 45, 85, 90, 7, 7, font_color, 4.5);
+
+				if (black_hole_sw[0] == 1) {
+					al_draw_bitmap(black_hole, 666, 154, 0);
+					al_draw_bitmap(black_hole, 427.5, 538, 0);
+					al_draw_rounded_rectangle(667, 155, 785, 249, 10, 10, font_color, 5);
+					al_draw_rounded_rectangle(428.5, 539, 546.5, 633, 10, 10, font_color, 5);
+				}
+				if (black_hole_sw[1] == 1) {
+					al_draw_bitmap(black_hole, 906, 730, 0);
+					al_draw_bitmap(black_hole, 1145, 348, 0);
+					al_draw_rounded_rectangle(907, 731, 1025, 825, 10, 10, font_color, 5);
+					al_draw_rounded_rectangle(1146, 349, 1264, 443, 10, 10, font_color, 5);
+				}
+
+				if (chance_home_sw[0] == 1) {
+					al_draw_bitmap(card, 427, 729, 0);
+					al_draw_rounded_rectangle(427, 729, 547, 825, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[1] == 1) {
+					al_draw_bitmap(card, 1144, 153, 0);
+					al_draw_rounded_rectangle(1144, 153, 1264, 249, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[2] == 1) {
+					al_draw_bitmap(card, 905, 537, 0);
+					al_draw_rounded_rectangle(905, 537, 1025, 633, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[3] == 1) {
+					al_draw_bitmap(card, 666, 346, 0);
+					al_draw_rounded_rectangle(666, 347, 786, 442, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[4] == 1) {
+					al_draw_bitmap(card, 1025, 827, 0);
+					al_draw_rounded_rectangle(1025, 825.5, 1144.5, 927, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[5] == 1) {
+					al_draw_bitmap(card, 545, 60, 0);
+					al_draw_rounded_rectangle(545, 57.5, 664.5, 157, 10, 10, font_color, 3);
+				}
+
+				al_draw_bitmap(matoran_1, 175, 577, 0);
+				al_draw_bitmap(matoran_1, 40, 480, 0);
+				al_draw_bitmap(matoran_1, 175, 385, 0);
+				al_draw_bitmap(matoran_1, 40, 285, 0);
+				al_draw_bitmap(matoran_2, 1400, 577, 0);
+				al_draw_bitmap(matoran_2, 1530, 480, 0);
+				al_draw_bitmap(matoran_2, 1400, 385, 0);
+				al_draw_bitmap(matoran_2, 1530, 285, 0);
+
+				if (chance_count[0][0] != '0') {
+					al_draw_filled_rounded_rectangle(173, 383, 291, 530, 10, 10, color_1);
+					al_draw_text(font_of_chance_card, font_color, 197, 410, 0, "roll the");
+					al_draw_text(font_of_chance_card, font_color, 208, 442, 0, "dice");
+					al_draw_text(font_of_chance_card, font_color, 203, 474, 0, "again");
+					al_draw_text(font_of_players, font_color, 179, 385, 0, chance_count[0]);
+				}
+				if (chance_count[1][0] != '0') {
+					al_draw_filled_rounded_rectangle(173, 576, 291, 722, 10, 10, color_1);
+					al_draw_text(font_of_chance_card, font_color, 187, 616, 0, "limitation");
+					al_draw_text(font_of_players, font_color, 179, 578, 0, chance_count[1]);
+				}
+				if (chance_count[2][0] != '0') {
+					al_draw_filled_rounded_rectangle(38, 283, 156, 431, 10, 10, color_1);
+					al_draw_text(font_of_chance_card, font_color, 60, 318, 0, "closed");
+					al_draw_text(font_of_chance_card, font_color, 70, 350, 0, "door");
+					al_draw_text(font_of_players, font_color, 44, 285, 0, chance_count[2]);
+				}
+				if (chance_count[3][0] != '0') {
+					al_draw_filled_rounded_rectangle(38, 478, 156, 625, 10, 10, color_1);
+					al_draw_text(font_of_chance_card, font_color, 60, 528, 0, "double");
+					al_draw_text(font_of_players, font_color, 44, 480, 0, chance_count[3]);
+				}
+				if (chance_count[4][0] != '0') {
+					al_draw_filled_rounded_rectangle(1398, 383, 1517, 530, 10, 10, color_2);
+					al_draw_text(font_of_chance_card, font_color, 1422, 410, 0, "roll the");
+					al_draw_text(font_of_chance_card, font_color, 1433, 442, 0, "dice");
+					al_draw_text(font_of_chance_card, font_color, 1428, 474, 0, "again");
+					al_draw_text(font_of_players, font_color, 1497, 385, 0, chance_count[4]);
+				}
+				if (chance_count[5][0] != '0') {
+					al_draw_filled_rounded_rectangle(1398, 576, 1517, 722, 10, 10, color_2);
+					al_draw_text(font_of_chance_card, font_color, 1412, 616, 0, "limitation");
+					al_draw_text(font_of_players, font_color, 1497, 578, 0, chance_count[5]);
+				}
+				if (chance_count[6][0] != '0') {
+					al_draw_filled_rounded_rectangle(1528, 283, 1647, 431, 10, 10, color_2);
+					al_draw_text(font_of_chance_card, font_color, 1550, 318, 0, "closed");
+					al_draw_text(font_of_chance_card, font_color, 1560, 350, 0, "door");
+					al_draw_text(font_of_players, font_color, 1627, 285, 0, chance_count[6]);
+				}
+				if (chance_count[7][0] != '0') {
+					al_draw_filled_rounded_rectangle(1528, 478, 1647, 625, 10, 10, color_2);
+					al_draw_text(font_of_chance_card, font_color, 1550, 528, 0, "double");
+					al_draw_text(font_of_players, font_color, 1627, 480, 0, chance_count[7]);
+				}
+
+				al_draw_rounded_rectangle(173, 383, 291, 530, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(173, 576, 291, 722, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(38, 283, 156, 431, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(38, 478, 156, 625, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(1398, 383, 1517, 530, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(1398, 576, 1517, 722, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(1528, 283, 1647, 431, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(1528, 478, 1647, 625, 5, 5, font_color, 3.5);
+
+
+				al_get_mouse_state(&mouse_state);//dice
+				if (area(&c2_tas_botton, &mouse_state) == 1) {
+					if (!sw_left_botton) if (al_mouse_button_down(&mouse_state, 1))
+						if (tas_number == 0)//------> to roll the dice once
+						{
+							tas_number = tas(&previous_a, &two_a_before);
+							set_str_tas(str_tas, tas_number, 1);
+
+							if (color == 1) { color = 2; ccbs_p2 = 1; }
+							else { color = 1; ccbs_p1 = 1; }
+
+							sw_left_botton = true;
+
+							once = 1;
+							next_dice_text = 0;
+							unteleport = 1;
+						}
+
+					if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+				}
+
+
+				if (once == 1 /*chance cards*/)
+				{
+					switch (color)
+					{
+					case 1:
+
+						al_get_mouse_state(&mouse_state);//roll the dice again
+						if (area(&card_0, &mouse_state) == 1) {
+							if (!sw_left_botton) if (al_mouse_button_down(&mouse_state, 1)) {
+								if (chance_count[0][0] > '0') {
+									chance_count[0][0] -= 1;
+									color = 2;
+									next_dice_text = 1;
+									tas_number = 0;
+									once = 0;
+								}
+								sw_left_botton = true;
+							}
+							if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+						}
+
+						al_get_mouse_state(&mouse_state);//closed door
+						if (area(&card_2, &mouse_state) == 1) {
+							if (!sw_left_botton) if (al_mouse_button_down(&mouse_state, 1)) {
+								if (chance_count[2][0] > '0' && ccbs_p1 == 1) {
+									chance_count[2][0] -= 1;
+									once = 0;
+									unteleport = 0;
+								}
+								sw_left_botton = true;
+							}
+							if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+						}
+
+						al_get_mouse_state(&mouse_state);//double
+						if (area(&card_3, &mouse_state) == 1) {
+							if (!sw_left_botton) if (al_mouse_button_down(&mouse_state, 1)) {
+								if (chance_count[3][0] > '0' && ccbs_p1 == 1) {
+									chance_count[3][0] -= 1;
+									set_str_tas(str_tas, tas_number, 2);
+									tas_number *= 2;
+									once = 0;
+								}
+								sw_left_botton = true;
+							}
+							if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+						}
+
+						break;
+
+					case 2:
+
+						al_get_mouse_state(&mouse_state);//roll the dice again
+						if (area(&card_4, &mouse_state) == 1) {
+							if (!sw_left_botton) if (al_mouse_button_down(&mouse_state, 1)) {
+								if (chance_count[4][0] > '0') {
+									chance_count[4][0] -= 1;
+									color = 1;
+									next_dice_text = 2;
+									tas_number = 0;
+									once = 0;
+								}
+								sw_left_botton = true;
+							}
+							if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+						}
+
+						al_get_mouse_state(&mouse_state);//closed door
+						if (area(&card_6, &mouse_state) == 1) {
+							if (!sw_left_botton) if (al_mouse_button_down(&mouse_state, 1)) {
+								if (chance_count[6][0] > '0' && ccbs_p2 == 1) {
+									chance_count[6][0] -= 1;
+									once = 0;
+									unteleport = 0;
+								}
+								sw_left_botton = true;
+							}
+							if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+						}
+
+						al_get_mouse_state(&mouse_state);//double
+						if (area(&card_7, &mouse_state) == 1) {
+							if (!sw_left_botton) if (al_mouse_button_down(&mouse_state, 1)) {
+								if (chance_count[7][0] > '0' && ccbs_p2 == 1) {
+									chance_count[7][0] -= 1;
+									set_str_tas(str_tas, tas_number, 2);
+									tas_number *= 2;
+									once = 0;
+								}
+								sw_left_botton = true;
+							}
+							if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+						}
+
+						break;
+					}
+
+				}
+
+				if (limitation_once == 1)
+				{
+					al_get_mouse_state(&mouse_state);//limitation
+					if (area(&card_5, &mouse_state) == 1) {
+						if (!sw_left_botton) if (al_mouse_button_down(&mouse_state, 1)) {
+							if (chance_count[5][0] > '0' && color == 1 && ccbs_p1 == 1) {
+								chance_count[5][0] -= 1;
+								limitation_once = 0;
+								swP = 3;
+							}
+							sw_left_botton = true;
+						}
+						if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+					}
+
+					al_get_mouse_state(&mouse_state);//limitation
+					if (area(&card_1, &mouse_state) == 1) {
+						if (!sw_left_botton) if (al_mouse_button_down(&mouse_state, 1)) {
+							if (chance_count[1][0] > '0' && color == 2 && ccbs_p2 == 1) {
+								chance_count[1][0] -= 1;
+								limitation_once = 0;
+								swP = 3;
+							}
+							sw_left_botton = true;
+						}
+						if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+					}
+				}
+
+
+				switch (color/*choose player for motion with keyboard*/)
+				{
+				case 1:
+
+					if (limit_p11 == 0 && on_the_middle_p11 == 0) {
+						al_get_keyboard_state(&keyboard_state);
+						if (al_key_down(&keyboard_state, ALLEGRO_KEY_1))
+						{
+							btn1 = &player1_botton1;
+							btn2 = &player2_botton1;
+							btn3 = &player2_botton2;
+							flag = &p11_flag;
+
+							temp = player1_botton1;
+							p_m = 1;
+						}
+					}
+
+					if (limit_p12 == 0 && on_the_middle_p12 == 0) {
+						al_get_keyboard_state(&keyboard_state);
+						if (al_key_down(&keyboard_state, ALLEGRO_KEY_2))
+						{
+							btn1 = &player1_botton2;
+							btn2 = &player2_botton1;
+							btn3 = &player2_botton2;
+							flag = &p12_flag;
+
+							temp = player1_botton2;
+							p_m = 1;
+						}
+					}
+
+					break;
+
+				case 2:
+
+					if (limit_p21 == 0 && on_the_middle_p21 == 0) {
+						al_get_keyboard_state(&keyboard_state);
+						if (al_key_down(&keyboard_state, ALLEGRO_KEY_1))
+						{
+							btn1 = &player2_botton1;
+							btn2 = &player1_botton1;
+							btn3 = &player1_botton2;
+							flag = &p21_flag;
+
+							temp = player2_botton1;
+							p_m = 1;
+						}
+					}
+
+					if (limit_p22 == 0 && on_the_middle_p22 == 0) {
+						al_get_keyboard_state(&keyboard_state);
+						if (al_key_down(&keyboard_state, ALLEGRO_KEY_2))
+						{
+							btn1 = &player2_botton2;
+							btn2 = &player1_botton1;
+							btn3 = &player1_botton2;
+							flag = &p22_flag;
+
+							temp = player2_botton2;
+							p_m = 1;
+						}
+					}
+
+					break;
+				}
+
+				switch (color/*choose player for motion with mouse*/)
+				{
+				case 1:
+
+					if (player1_botton1.x1 == player1_botton2.x1 && player1_botton1.y1 == player1_botton2.y1) limit_p12 = 1;
+
+
+					if (limit_p11 == 0 && on_the_middle_p11 == 0) {
+						al_get_mouse_state(&mouse_state);
+						if (area(&player1_botton1, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+						{
+							btn1 = &player1_botton1;
+							btn2 = &player2_botton1;
+							btn3 = &player2_botton2;
+							flag = &p11_flag;
+
+							temp = player1_botton1;
+							p_m = 1;
+						}
+					}
+
+					if (limit_p12 == 0 && on_the_middle_p12 == 0) {
+						al_get_mouse_state(&mouse_state);
+						if (area(&player1_botton2, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+						{
+							btn1 = &player1_botton2;
+							btn2 = &player2_botton1;
+							btn3 = &player2_botton2;
+							flag = &p12_flag;
+
+							temp = player1_botton2;
+							p_m = 1;
+						}
+					}
+
+					break;
+
+				case 2:
+
+					if (player2_botton1.x1 == player2_botton2.x1 && player2_botton1.y1 == player2_botton2.y1) limit_p22 = 1;
+
+
+					if (limit_p21 == 0 && on_the_middle_p21 == 0) {
+						al_get_mouse_state(&mouse_state);
+						if (area(&player2_botton1, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+						{
+							btn1 = &player2_botton1;
+							btn2 = &player1_botton1;
+							btn3 = &player1_botton2;
+							flag = &p21_flag;
+
+							temp = player2_botton1;
+							p_m = 1;
+						}
+					}
+
+					if (limit_p22 == 0 && on_the_middle_p22 == 0) {
+						al_get_mouse_state(&mouse_state);
+						if (area(&player2_botton2, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+						{
+							btn1 = &player2_botton2;
+							btn2 = &player1_botton1;
+							btn3 = &player1_botton2;
+							flag = &p22_flag;
+
+							temp = player2_botton2;
+							p_m = 1;
+						}
+					}
+
+					break;
+				}
+
+
+
+				black_hole_bug_solution = 0;
+
+
+				if (p_m == 1 && check_1_81(temp, tas_number) == 1)
+				{
+					if (line(temp.y1) == 1) {
+						if (tas_number > 0) *flag = 0;
+						if (tas_number < 0) *flag = ALLEGRO_FLIP_HORIZONTAL;
+					}
+					if (line(temp.y1) == 0) {
+						if (tas_number > 0) *flag = ALLEGRO_FLIP_HORIZONTAL;
+						if (tas_number < 0) *flag = 0;
+					}
+
+					al_draw_bitmap(warning, 630, 200, 0);
+
+					if (color == 1) ccbs_p1 = 0;
+					if (color == 2) ccbs_p2 = 0;
+
+					tas_number = 0;
+					p_m = 0;
+				}
+
+
+				if (p_m == 1 && tas_number != 0)//motion function in main
+				{
+					if (line(temp.y1) == 1) {
+						if (tas_number > 0) *flag = 0;
+						if (tas_number < 0) *flag = ALLEGRO_FLIP_HORIZONTAL;
+					}
+					if (line(temp.y1) == 0) {
+						if (tas_number > 0) *flag = ALLEGRO_FLIP_HORIZONTAL;
+						if (tas_number < 0) *flag = 0;
+					}
+
+
+					if (line(temp.y1) == 1) if (tas_number > 0)
+					{
+						if (check_coordinates(temp) == 1) {
+							btn1->y1 -= 96;
+							btn1->y2 -= 96;
+
+							temp.y1 -= 96;
+							temp.y2 -= 96;
+						}
+						else {
+							btn1->x1 += 120;
+							btn1->x2 += 120;
+
+							temp.x1 += 120;
+							temp.x2 += 120;
+						}
+						tas_number--;
+					}
+
+					if (line(temp.y1) == 0) if (tas_number > 0)
+					{
+						if (check_coordinates(temp) == 1) {
+							btn1->y1 -= 96;
+							btn1->y2 -= 96;
+
+							temp.y1 -= 96;
+							temp.y2 -= 96;
+						}
+						else {
+							btn1->x1 -= 120;
+							btn1->x2 -= 120;
+
+							temp.x1 -= 120;
+							temp.x2 -= 120;
+						}
+						tas_number--;
+					}
+
+					if (line(temp.y1) == 1) if (tas_number < 0)
+					{
+						if (check_coordinates(temp) == 0) {
+							btn1->y1 += 96;
+							btn1->y2 += 96;
+
+							temp.y1 += 96;
+							temp.y2 += 96;
+						}
+						else {
+							btn1->x1 -= 120;
+							btn1->x2 -= 120;
+
+							temp.x1 -= 120;
+							temp.x2 -= 120;
+						}
+						tas_number++;
+					}
+
+					if (line(temp.y1) == 0) if (tas_number < 0)
+					{
+						if (check_coordinates(temp) == 0) {
+							btn1->y1 += 96;
+							btn1->y2 += 96;
+
+							temp.y1 += 96;
+							temp.y2 += 96;
+						}
+						else {
+							btn1->x1 += 120;
+							btn1->x2 += 120;
+
+							temp.x1 += 120;
+							temp.x2 += 120;
+						}
+						tas_number++;
+					}
+
+					key = 1;
+					tocc = 1;
+					limitation_once = 1;
+					black_hole_bug_solution = 1;
+
+					if (color == 1) ccbs_p1 = 0;
+					if (color == 2) ccbs_p2 = 0;
+
+				}
+
+				if (p_m == 1 && tas_number == 0)
+				{
+					if (check_chance(temp) == 1 && tocc == 1) chance_card(color, &tocc);
+
+					attack(btn1, btn2, btn3, color);
+
+					if (key == 1 && unteleport == 1 && black_hole_bug_solution == 1) teleport(btn1, &key);
+
+					if (middle(temp) == 1) swP = 5;
+
+					p_m = 0;
+				}
+
+
+
+
+
+
+				if (on_the_middle_p11 == 0) {
+					al_draw_bitmap(player_11, player1_botton1.x1, player1_botton1.y1, p11_flag);
+					if (change_f_color(&player1_botton1) == 1)
+						al_draw_text(font_of_players, font_color2, player1_botton1.x1 + 100, player1_botton1.y1 + 65, 0, "1");
+					else
+						al_draw_text(font_of_players, font_color, player1_botton1.x1 + 100, player1_botton1.y1 + 65, 0, "1");
+				}
+				if (on_the_middle_p12 == 0) {
+					al_draw_bitmap(player_12, player1_botton2.x1, player1_botton2.y1, p12_flag);
+					if (change_f_color(&player1_botton2) == 1)
+						al_draw_text(font_of_players, font_color2, player1_botton2.x1 + 100, player1_botton2.y1 + 65, 0, "2");
+					else
+						al_draw_text(font_of_players, font_color, player1_botton2.x1 + 100, player1_botton2.y1 + 65, 0, "2");
+				}
+				if (on_the_middle_p21 == 0) {
+					al_draw_bitmap(player_21, player2_botton1.x1, player2_botton1.y1, p21_flag);
+					if (change_f_color(&player2_botton1) == 1)
+						al_draw_text(font_of_players, font_color2, player2_botton1.x1 + 100, player2_botton1.y1 + 65, 0, "1");
+					else
+						al_draw_text(font_of_players, font_color, player2_botton1.x1 + 100, player2_botton1.y1 + 65, 0, "1");
+				}
+				if (on_the_middle_p22 == 0) {
+					al_draw_bitmap(player_22, player2_botton2.x1, player2_botton2.y1, p22_flag);
+					if (change_f_color(&player2_botton2) == 1)
+						al_draw_text(font_of_players, font_color2, player2_botton2.x1 + 100, player2_botton2.y1 + 65, 0, "2");
+					else
+						al_draw_text(font_of_players, font_color, player2_botton2.x1 + 100, player2_botton2.y1 + 65, 0, "2");
+				}
+
+
+				if (tas_number == 0) {
+					limit_p11 = 0;
+					limit_p12 = 0;
+					limit_p21 = 0;
+					limit_p22 = 0;
+				}
+
+
+				break;
+			case 3://limitation case
+
+				al_draw_bitmap(web, 295, 40, 0);
+				al_draw_rounded_rectangle(295, 40, 1395, 940, 10, 10, font_color, 7);
+
+				if (color == 1) {
+					al_draw_bitmap(player_11, 510, 247, 0);
+					al_draw_bitmap(player_12, 510, 377, 0);
+				}
+				if (color == 2) {
+					al_draw_bitmap(player_21, 510, 248, 0);
+					al_draw_bitmap(player_22, 510, 378, 0);
+				}
+
+				al_draw_text(font_of_first_page, font_color, 330, 140, 0, "which one?");
+				al_draw_text(font_of_inside_menu, font_color, 470, 260, 0, "1");
+				al_draw_text(font_of_inside_menu, font_color, 470, 390, 0, "2");
+				al_draw_text(font_of_inside_menu, font_color, 343, 500, 0, "view positions");
+				al_draw_text(font_of_inside_menu, font_color, 412, 583, 0, "cancel");
+
+				al_draw_rounded_rectangle(460, 245, 620, 340, 5, 5, font_color, 5);
+				al_draw_rounded_rectangle(460, 375, 620, 470, 5, 5, font_color, 5);
+				al_draw_rounded_rectangle(330, 505, 620, 555, 5, 5, font_color, 5);
+				al_draw_rounded_rectangle(330, 590, 620, 640, 5, 5, font_color, 5);
+
+
+				switch (color/*limitation*/)
+				{
+				case 1:
+					al_get_mouse_state(&mouse_state);
+					if (area(&c3_one, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) if (on_the_middle_p11 == 0)
+					{
+						limit_p11 = 1;
+						if (on_the_middle_p11 == 1 || on_the_middle_p12 == 1) {
+							next_dice_text = 2;
+							tas_number = 0;
+						}
+						swP = 2;
+					}
+
+					al_get_mouse_state(&mouse_state);
+					if (area(&c3_two, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) if (on_the_middle_p12 == 0)
+					{
+						limit_p12 = 1;
+						if (on_the_middle_p11 == 1 || on_the_middle_p12 == 1) {
+							next_dice_text = 2;
+							tas_number = 0;
+						}
+						swP = 2;
+					}
+
+					break;
+
+				case 2:
+					al_get_mouse_state(&mouse_state);
+					if (area(&c3_one, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) if (on_the_middle_p21 == 0) {
+						limit_p21 = 1;
+						if (on_the_middle_p21 == 1 || on_the_middle_p22 == 1) {
+							next_dice_text = 1;
+							tas_number = 0;
+						}
+						swP = 2;
+					}
+
+					al_get_mouse_state(&mouse_state);
+					if (area(&c3_two, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) if (on_the_middle_p22 == 0) {
+						limit_p22 = 1;
+						if (on_the_middle_p21 == 1 || on_the_middle_p22 == 1) {
+							next_dice_text = 1;
+							tas_number = 0;
+						}
+						swP = 2;
+					}
+
+
+					break;
+
+				}
+
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c3_view_positions, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) swP = 4;
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c3_cancel, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) {
+					if (color == 1) chance_count[5][0] += 1;
+					if (color == 2) chance_count[1][0] += 1;
+					limitation_once = 1;
+					swP = 2;
+				}
+
+
+				break;
+			case 4://view positions in limitation case
+
+				al_clear_to_color(al_map_rgba_f(150, 150, 150, 105));
+				al_draw_rounded_rectangle(0, 0, 1700, 980, 8, 8, font_color, 10);
+
+				if (color == 1) al_draw_filled_rounded_rectangle(1500, 845, 1585, 925, 10, 10, tas_color_1);
+				if (color == 2) al_draw_filled_rounded_rectangle(1500, 845, 1585, 925, 10, 10, tas_color_2);
+				al_draw_rounded_rectangle(1500, 845, 1585, 925, 10, 10, font_color, 5);
+				al_draw_text(font_of_first_page, font_color, 1510, 848, 0, str_tas);
+
+				al_draw_bitmap(board, 305, 55, 0);
+				al_draw_rounded_rectangle(303.5, 54.5, 1387, 926, 10, 10, font_color, 7);
+
+				al_draw_bitmap(menu, -130, 10, 0);
+				al_draw_rounded_rectangle(40, 45, 85, 90, 7, 7, font_color, 4.5);
+
+				if (black_hole_sw[0] == 1) {
+					al_draw_bitmap(black_hole, 666, 154, 0);
+					al_draw_bitmap(black_hole, 427.5, 538, 0);
+					al_draw_rounded_rectangle(667, 155, 785, 249, 10, 10, font_color, 5);
+					al_draw_rounded_rectangle(428.5, 539, 546.5, 633, 10, 10, font_color, 5);
+				}
+				if (black_hole_sw[1] == 1) {
+					al_draw_bitmap(black_hole, 906, 730, 0);
+					al_draw_bitmap(black_hole, 1145, 348, 0);
+					al_draw_rounded_rectangle(907, 731, 1025, 825, 10, 10, font_color, 5);
+					al_draw_rounded_rectangle(1146, 349, 1264, 443, 10, 10, font_color, 5);
+				}
+
+				if (chance_home_sw[0] == 1) {
+					al_draw_bitmap(card, 427, 729, 0);
+					al_draw_rounded_rectangle(427, 729, 547, 825, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[1] == 1) {
+					al_draw_bitmap(card, 1144, 153, 0);
+					al_draw_rounded_rectangle(1144, 153, 1264, 249, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[2] == 1) {
+					al_draw_bitmap(card, 905, 537, 0);
+					al_draw_rounded_rectangle(905, 537, 1025, 633, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[3] == 1) {
+					al_draw_bitmap(card, 666, 346, 0);
+					al_draw_rounded_rectangle(666, 347, 786, 442, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[4] == 1) {
+					al_draw_bitmap(card, 1025, 827, 0);
+					al_draw_rounded_rectangle(1025, 825.5, 1144.5, 927, 10, 10, font_color, 3);
+				}
+				if (chance_home_sw[5] == 1) {
+					al_draw_bitmap(card, 545, 60, 0);
+					al_draw_rounded_rectangle(545, 57.5, 664.5, 157, 10, 10, font_color, 3);
+				}
+
+				al_draw_bitmap(matoran_1, 175, 577, 0);
+				al_draw_bitmap(matoran_1, 40, 480, 0);
+				al_draw_bitmap(matoran_1, 175, 385, 0);
+				al_draw_bitmap(matoran_1, 40, 285, 0);
+				al_draw_bitmap(matoran_2, 1400, 577, 0);
+				al_draw_bitmap(matoran_2, 1530, 480, 0);
+				al_draw_bitmap(matoran_2, 1400, 385, 0);
+				al_draw_bitmap(matoran_2, 1530, 285, 0);
+
+				if (chance_count[0][0] != '0') {
+					al_draw_filled_rounded_rectangle(173, 383, 291, 530, 10, 10, color_1);
+					al_draw_text(font_of_chance_card, font_color, 197, 410, 0, "roll the");
+					al_draw_text(font_of_chance_card, font_color, 208, 442, 0, "dice");
+					al_draw_text(font_of_chance_card, font_color, 203, 474, 0, "again");
+					al_draw_text(font_of_players, font_color, 179, 385, 0, chance_count[0]);
+				}
+				if (chance_count[1][0] != '0') {
+					al_draw_filled_rounded_rectangle(173, 576, 291, 722, 10, 10, color_1);
+					al_draw_text(font_of_chance_card, font_color, 187, 616, 0, "limitation");
+					al_draw_text(font_of_players, font_color, 179, 578, 0, chance_count[1]);
+				}
+				if (chance_count[2][0] != '0') {
+					al_draw_filled_rounded_rectangle(38, 283, 156, 431, 10, 10, color_1);
+					al_draw_text(font_of_chance_card, font_color, 60, 318, 0, "closed");
+					al_draw_text(font_of_chance_card, font_color, 70, 350, 0, "door");
+					al_draw_text(font_of_players, font_color, 44, 285, 0, chance_count[2]);
+				}
+				if (chance_count[3][0] != '0') {
+					al_draw_filled_rounded_rectangle(38, 478, 156, 625, 10, 10, color_1);
+					al_draw_text(font_of_chance_card, font_color, 60, 528, 0, "double");
+					al_draw_text(font_of_players, font_color, 44, 480, 0, chance_count[3]);
+				}
+				if (chance_count[4][0] != '0') {
+					al_draw_filled_rounded_rectangle(1398, 383, 1517, 530, 10, 10, color_2);
+					al_draw_text(font_of_chance_card, font_color, 1422, 410, 0, "roll the");
+					al_draw_text(font_of_chance_card, font_color, 1433, 442, 0, "dice");
+					al_draw_text(font_of_chance_card, font_color, 1428, 474, 0, "again");
+					al_draw_text(font_of_players, font_color, 1497, 385, 0, chance_count[4]);
+				}
+				if (chance_count[5][0] != '0') {
+					al_draw_filled_rounded_rectangle(1398, 576, 1517, 722, 10, 10, color_2);
+					al_draw_text(font_of_chance_card, font_color, 1412, 616, 0, "limitation");
+					al_draw_text(font_of_players, font_color, 1497, 578, 0, chance_count[5]);
+				}
+				if (chance_count[6][0] != '0') {
+					al_draw_filled_rounded_rectangle(1528, 283, 1647, 431, 10, 10, color_2);
+					al_draw_text(font_of_chance_card, font_color, 1550, 318, 0, "closed");
+					al_draw_text(font_of_chance_card, font_color, 1560, 350, 0, "door");
+					al_draw_text(font_of_players, font_color, 1627, 285, 0, chance_count[6]);
+				}
+				if (chance_count[7][0] != '0') {
+					al_draw_filled_rounded_rectangle(1528, 478, 1647, 625, 10, 10, color_2);
+					al_draw_text(font_of_chance_card, font_color, 1550, 528, 0, "double");
+					al_draw_text(font_of_players, font_color, 1627, 480, 0, chance_count[7]);
+				}
+
+				al_draw_rounded_rectangle(173, 383, 291, 530, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(173, 576, 291, 722, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(38, 283, 156, 431, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(38, 478, 156, 625, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(1398, 383, 1517, 530, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(1398, 576, 1517, 722, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(1528, 283, 1647, 431, 5, 5, font_color, 3.5);
+				al_draw_rounded_rectangle(1528, 478, 1647, 625, 5, 5, font_color, 3.5);
+
+
+				if (on_the_middle_p11 == 0) {
+					al_draw_bitmap(player_11, player1_botton1.x1, player1_botton1.y1, p11_flag);
+					if (change_f_color(&player1_botton1) == 1)
+						al_draw_text(font_of_players, font_color2, player1_botton1.x1 + 100, player1_botton1.y1 + 65, 0, "1");
+					else
+						al_draw_text(font_of_players, font_color, player1_botton1.x1 + 100, player1_botton1.y1 + 65, 0, "1");
+				}
+				if (on_the_middle_p12 == 0) {
+					al_draw_bitmap(player_12, player1_botton2.x1, player1_botton2.y1, p12_flag);
+					if (change_f_color(&player1_botton2) == 1)
+						al_draw_text(font_of_players, font_color2, player1_botton2.x1 + 100, player1_botton2.y1 + 65, 0, "2");
+					else
+						al_draw_text(font_of_players, font_color, player1_botton2.x1 + 100, player1_botton2.y1 + 65, 0, "2");
+				}
+				if (on_the_middle_p21 == 0) {
+					al_draw_bitmap(player_21, player2_botton1.x1, player2_botton1.y1, p21_flag);
+					if (change_f_color(&player2_botton1) == 1)
+						al_draw_text(font_of_players, font_color2, player2_botton1.x1 + 100, player2_botton1.y1 + 65, 0, "1");
+					else
+						al_draw_text(font_of_players, font_color, player2_botton1.x1 + 100, player2_botton1.y1 + 65, 0, "1");
+				}
+				if (on_the_middle_p22 == 0) {
+					al_draw_bitmap(player_22, player2_botton2.x1, player2_botton2.y1, p22_flag);
+					if (change_f_color(&player2_botton2) == 1)
+						al_draw_text(font_of_players, font_color2, player2_botton2.x1 + 100, player2_botton2.y1 + 65, 0, "2");
+					else
+						al_draw_text(font_of_players, font_color, player2_botton2.x1 + 100, player2_botton2.y1 + 65, 0, "2");
+				}
+
+
+				al_draw_rounded_rectangle(50, 860, 250, 925, 10, 10, font_color, 5);
+				al_draw_text(font_of_inside_menu, font_color, 105, 860, 0, "back");
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c4_back, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) swP = 3;
+
+
+				break;
+			case 5://End
+
+				if (tas_number == 0) {
+					if (middle(player1_botton1) == 1) on_the_middle_p11 = 1;
+					if (middle(player1_botton2) == 1) on_the_middle_p12 = 1;
+					if (middle(player2_botton1) == 1) on_the_middle_p21 = 1;
+					if (middle(player2_botton2) == 1) on_the_middle_p22 = 1;
+				}
+
+				al_draw_bitmap(win, 666, 346, 0);
+				al_draw_rounded_rectangle(666, 346, 1026, 634, 10, 10, font_color, 5);
+
+				al_draw_text(font_of_first_page, al_map_rgba(180, 110, 20, 70), 716, 360, 0, "Good Job");
+				al_draw_text(font_of_first_page, al_map_rgba(200, 130, 40, 0), 733, 440, 0, "Continue");
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c5_continue_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) if (end_y == -980) swP = 2;
+				al_get_keyboard_state(&keyboard_state);
+				if (al_key_down(&keyboard_state, ALLEGRO_KEY_ENTER)) if (end_y == -980) swP = 2;
+
+
+				if (on_the_middle_p11 == 1 && on_the_middle_p12 == 1) {
+					al_draw_bitmap(end, 0, end_y += 5, 0);
+					if (end_y > 0) {
+						end_y = 0;
+
+						switch (p_code_1)
+						{
+						case 1: al_draw_text(font_of_inside_menu, tas_color_1, 798, 100, 0, str_p_1);    break;
+						case 2: al_draw_text(font_of_inside_menu, tas_color_1, 780, 100, 0, str_p_1);    break;
+						case 3: al_draw_text(font_of_inside_menu, tas_color_1, 815, 100, 0, str_p_1);    break;
+						case 4: al_draw_text(font_of_inside_menu, tas_color_1, 790, 100, 0, str_p_1);    break;
+						case 5: al_draw_text(font_of_inside_menu, tas_color_1, 785.5, 100, 0, str_p_1);  break;
+						case 6: al_draw_text(font_of_inside_menu, tas_color_1, 780.5, 100, 0, str_p_1);  break;
+						}
+
+						al_draw_text(font_of_inside_menu, tas_color_1, 737, 170, 0, "is the Winner");
+
+						al_draw_text(font_of_first_page, tas_color_1, 170, 610, 0, "New Game");
+						al_draw_text(font_of_first_page, tas_color_1, 1360, 610, 0, "Home");
+					}
+				}
+				if (on_the_middle_p21 == 1 && on_the_middle_p22 == 1) {
+					al_draw_bitmap(end, 0, end_y += 5, 0);
+					if (end_y > 0) {
+						end_y = 0;
+
+						switch (p_code_2)
+						{
+						case 1: al_draw_text(font_of_inside_menu, tas_color_2, 798, 100, 0, str_p_2);    break;
+						case 2: al_draw_text(font_of_inside_menu, tas_color_2, 780, 100, 0, str_p_2);    break;
+						case 3: al_draw_text(font_of_inside_menu, tas_color_2, 815, 100, 0, str_p_2);    break;
+						case 4: al_draw_text(font_of_inside_menu, tas_color_2, 790, 100, 0, str_p_2);    break;
+						case 5: al_draw_text(font_of_inside_menu, tas_color_2, 785.5, 100, 0, str_p_2);  break;
+						case 6: al_draw_text(font_of_inside_menu, tas_color_2, 780.5, 100, 0, str_p_2);  break;
+						}
+
+						al_draw_text(font_of_inside_menu, tas_color_2, 737, 170, 0, "is the Winner");
+
+						al_draw_text(font_of_first_page, tas_color_2, 170, 610, 0, "New Game");
+						al_draw_text(font_of_first_page, tas_color_2, 1360, 610, 0, "Home");
+					}
+
+				}
+
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c5_new_game_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) if (end_y == 0) swP = 7;
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c5_home_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) if (end_y == 0) swP = 1;
+
+
+				break;
+			case 6://inside menu
+
+				al_draw_bitmap(inside_menu, 490, 40, 0);
+				al_draw_rounded_rectangle(490, 40, 1190, 940, 10, 10, font_color, 10);
+
+				al_draw_text(font_of_inside_menu, font_color, 760, 550, 0, "Resume");
+				al_draw_text(font_of_inside_menu, font_color, 505, 630, 0, "New Game");
+				al_draw_text(font_of_inside_menu, font_color, 955, 630, 0, "Save & quit");
+
+				al_draw_rounded_rectangle(755, 550, 923, 610, 10, 10, font_color, 3);
+				al_draw_rounded_rectangle(500, 630, 732, 690, 10, 10, font_color, 3);
+				al_draw_rounded_rectangle(950, 630, 1179, 690, 10, 10, font_color, 3);
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c6_resume_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) swP = 2;
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c6_new_game_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) {
+					topp[2] = 6;   // 6 means case 6
+					swP = 7;
+				}
+
+				al_get_mouse_state(&mouse_state);
+				if (area(&c6_save_quit_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) {
+					save_file_error = 0;
+					load_file_error = 0;
+					continue_or_save_sw = 2;
+					swP = 8;
+				}
+
+
+				break;
+			case 7: //new game
+
+				board_y = -500;
+				end_y = -980;
+				p_matau_y = -480;
+				p_nokama_y = 1000;
+				p_nuju_x = 1700;
+				p_onewa_x = -500;
+				p_vakama_y = -540;
+				p_whenua_y = 1200;
+
+				load_file_error = 0;
+				save_file_error = 0;
+
+				p_number = 0;
+				topp[0] = 0;
+				topp[1] = 0;
+				enter_sw = 0;
+
+				if (topp[2] == 1) { p1_ch = 0; p2_ch = 0; }
+				if (topp[2] == 6) { p1_ch = 1; p2_ch = 1; }
+
+				next_dice_text = 0;
+				key = 1;
+				unteleport = 1;
+				tocc = 1;
+				once = 1;
+				limitation_once = 1;
+				ccbs_p1 = -1;
+				ccbs_p2 = -1;
+
+				on_the_middle_p11 = 0;
+				on_the_middle_p12 = 0;
+				on_the_middle_p21 = 0;
+				on_the_middle_p22 = 0;
+
+				p11_flag = 0;
+				p12_flag = ALLEGRO_FLIP_HORIZONTAL;
+				p21_flag = 0;
+				p22_flag = ALLEGRO_FLIP_HORIZONTAL;
+
+				srand(time(NULL));
+				color = rand() % 2 + 1;
+
+				str_tas[0] = ' ';
+				str_tas[1] = ' ';
+				str_tas[2] = '\0';
+
+				tas_number = 0;
+				previous_a = -1;
+				two_a_before = -2;
+
+				limit_p11 = 0;
+				limit_p12 = 0;
+				limit_p21 = 0;
+				limit_p22 = 0;
+
+				player1_botton1.x1 = 310 + 0 * 120;
+				player1_botton1.x2 = 310 + 1 * 120;
+				player1_botton1.y1 = 830 - 0 * 96;
+				player1_botton1.y2 = 830 + 1 * 96;
+
+				player1_botton2.x1 = 310 + 0 * 120;
+				player1_botton2.x2 = 310 + 1 * 120;
+				player1_botton2.y1 = 830 - 0 * 96;
+				player1_botton2.y2 = 830 + 1 * 96;
+
+				player2_botton1.x1 = 310 + 8 * 120;
+				player2_botton1.x2 = 310 + 9 * 120;
+				player2_botton1.y1 = 830 - 8 * 96;
+				player2_botton1.y2 = 830 - 7 * 96;
+
+				player2_botton2.x1 = 310 + 8 * 120;
+				player2_botton2.x2 = 310 + 9 * 120;
+				player2_botton2.y1 = 830 - 8 * 96;
+				player2_botton2.y2 = 830 - 7 * 96;
+
+				black_hole_sw[0] = 0;
+				black_hole_sw[1] = 0;
+
+				for (i = 0; i < 8; i++) {
+					chance_count[i][0] = '0';
+				}
+				for (i = 0; i < 6; i++) {
+					chance_home_sw[i] = 0;
+				}
+
+				swP = 9;
+
+
+				break;
+			case 8://saved game
+
+				if (continue_or_save_sw == 1) //for continue
+				{
+					saved_game = fopen("saved_game_file/saved_game.dat", "rb");
+
+					if (!saved_game) {
+						load_file_error = 1;
+						swP = 1;
+						break;
+					}
+
+					fread(&p_code_1, sizeof(int), 1, saved_game);
+					fread(&p_code_2, sizeof(int), 1, saved_game);
+					switch (p_code_1)
+					{
+					case 1:
+						load_p_1 = matoran_matau;
+						color_1 = al_map_rgba(0, 102, 80, 1);
+						tas_color_1 = al_map_rgba_f(0, 0.45, 0.29, 0.7);
+						strcpy(str_p_1, "Matau");
+						player_11 = player_12 = matau;
+						matoran_1 = matoran_matau;
+						break;
+
+					case 2:
+						load_p_1 = matoran_nokama;
+						color_1 = al_map_rgba(10, 30, 170, 1);
+						tas_color_1 = al_map_rgba_f(0.15, 0.31, 0.6, 1);
+						strcpy(str_p_1, "Nokama");
+						player_11 = player_12 = nokama;
+						matoran_1 = matoran_nokama;
+						break;
+
+					case 3:
+						load_p_1 = matoran_nuju;
+						color_1 = al_map_rgba(80, 80, 80, 1);
+						tas_color_1 = al_map_rgba_f(0.9, 0.9, 0.9, 1);
+						strcpy(str_p_1, "Nuju");
+						player_11 = player_12 = nuju;
+						matoran_1 = matoran_nuju;
+						break;
+
+					case 4:
+						load_p_1 = matoran_onewa;
+						color_1 = al_map_rgba(142, 120, 44, 1);
+						tas_color_1 = al_map_rgba_f(1, 0.53, 0, 0.5);
+						strcpy(str_p_1, "Onewa");
+						player_11 = player_12 = onewa;
+						matoran_1 = matoran_onewa;
+						break;
+
+					case 5:
+						load_p_1 = matoran_vakama;
+						color_1 = al_map_rgba(115, 40, 10, 1);
+						tas_color_1 = al_map_rgba_f(0.7, 0.02, 0.02, 1);
+						strcpy(str_p_1, "Vakama");
+						player_11 = player_12 = vakama;
+						matoran_1 = matoran_vakama;
+						break;
+
+					case 6:
+						load_p_1 = matoran_whenua;
+						color_1 = al_map_rgba(57, 57, 57, 180);
+						tas_color_1 = al_map_rgba_f(0.2, 0.2, 0.2, 0.8);
+						strcpy(str_p_1, "Whenua");
+						player_11 = player_12 = whenua;
+						matoran_1 = matoran_whenua;
+						break;
+
+					}
+					switch (p_code_2)
+					{
+					case 1:
+						load_p_2 = matoran_matau;
+						color_2 = al_map_rgba(0, 102, 80, 1);
+						tas_color_2 = al_map_rgba_f(0, 0.45, 0.29, 0.7);
+						strcpy(str_p_2, "Matau");
+						player_21 = player_22 = matau;
+						matoran_2 = matoran_matau;
+						break;
+
+					case 2:
+						load_p_2 = matoran_nokama;
+						color_2 = al_map_rgba(10, 30, 170, 1);
+						tas_color_2 = al_map_rgba_f(0.15, 0.31, 0.6, 1);
+						strcpy(str_p_2, "Nokama");
+						player_21 = player_22 = nokama;
+						matoran_2 = matoran_nokama;
+						break;
+
+					case 3:
+						load_p_2 = matoran_nuju;
+						color_2 = al_map_rgba(80, 80, 80, 1);
+						tas_color_2 = al_map_rgba_f(0.9, 0.9, 0.9, 1);
+						strcpy(str_p_2, "Nuju");
+						player_21 = player_22 = nuju;
+						matoran_2 = matoran_nuju;
+						break;
+
+					case 4:
+						load_p_2 = matoran_onewa;
+						color_2 = al_map_rgba(142, 120, 44, 1);
+						tas_color_2 = al_map_rgba_f(1, 0.53, 0, 0.5);
+						strcpy(str_p_2, "Onewa");
+						player_21 = player_22 = onewa;
+						matoran_2 = matoran_onewa;
+						break;
+
+					case 5:
+						load_p_2 = matoran_vakama;
+						color_2 = al_map_rgba(115, 40, 10, 1);
+						tas_color_2 = al_map_rgba_f(0.7, 0.02, 0.02, 1);
+						strcpy(str_p_2, "Vakama");
+						player_21 = player_22 = vakama;
+						matoran_2 = matoran_vakama;
+						break;
+
+					case 6:
+						load_p_2 = matoran_whenua;
+						color_2 = al_map_rgba(57, 57, 57, 180);
+						tas_color_2 = al_map_rgba_f(0.2, 0.2, 0.2, 0.8);
+						strcpy(str_p_2, "Whenua");
+						player_21 = player_22 = whenua;
+						matoran_2 = matoran_whenua;
+						break;
+
+					}
+
+					fread(&board_y, sizeof(int), 1, saved_game);
+
+					fread(&next_dice_text, sizeof(int), 1, saved_game);
+					fread(&key, sizeof(int), 1, saved_game);
+					fread(&unteleport, sizeof(int), 1, saved_game);
+					fread(&tocc, sizeof(int), 1, saved_game);
+					fread(&once, sizeof(int), 1, saved_game);
+					fread(&limitation_once, sizeof(int), 1, saved_game);
+					fread(&ccbs_p1, sizeof(int), 1, saved_game);
+					fread(&ccbs_p2, sizeof(int), 1, saved_game);
+
+					fread(&on_the_middle_p11, sizeof(int), 1, saved_game);
+					fread(&on_the_middle_p12, sizeof(int), 1, saved_game);
+					fread(&on_the_middle_p21, sizeof(int), 1, saved_game);
+					fread(&on_the_middle_p22, sizeof(int), 1, saved_game);
+
+					fread(&p11_flag, sizeof(int), 1, saved_game);
+					fread(&p12_flag, sizeof(int), 1, saved_game);
+					fread(&p21_flag, sizeof(int), 1, saved_game);
+					fread(&p22_flag, sizeof(int), 1, saved_game);
+
+					fread(&color, sizeof(int), 1, saved_game);
+
+					fgets(str_tas, 3, saved_game);
+					fread(&tas_number, sizeof(int), 1, saved_game);
+					fread(&previous_a, sizeof(int), 1, saved_game);
+					fread(&two_a_before, sizeof(int), 1, saved_game);
+
+					fread(&limit_p11, sizeof(int), 1, saved_game);
+					fread(&limit_p12, sizeof(int), 1, saved_game);
+					fread(&limit_p21, sizeof(int), 1, saved_game);
+					fread(&limit_p22, sizeof(int), 1, saved_game);
+
+					fread(&player1_botton1, sizeof(struct button), 1, saved_game);
+					fread(&player1_botton2, sizeof(struct button), 1, saved_game);
+					fread(&player2_botton1, sizeof(struct button), 1, saved_game);
+					fread(&player2_botton2, sizeof(struct button), 1, saved_game);
+
+					fgets(chance_count[0], 2, saved_game);
+					fgets(chance_count[1], 2, saved_game);
+					fgets(chance_count[2], 2, saved_game);
+					fgets(chance_count[3], 2, saved_game);
+					fgets(chance_count[4], 2, saved_game);
+					fgets(chance_count[5], 2, saved_game);
+					fgets(chance_count[6], 2, saved_game);
+					fgets(chance_count[7], 2, saved_game);
+
+					fread(black_hole_sw, sizeof(int), 2, saved_game);
+					fread(chance_home_sw, sizeof(int), 6, saved_game);
+
+
+					fclose(saved_game);
+					swP = 2;
+				}
+
+				if (continue_or_save_sw == 2) //for save
+				{
+					saved_game = fopen("saved_game_file/saved_game.dat", "wb");
+
+					if (!saved_game) {
+						save_file_error = 1;
+						swP = 1;
+						break;
+					}
+
+
+					fwrite(&p_code_1, sizeof(int), 1, saved_game);
+					fwrite(&p_code_2, sizeof(int), 1, saved_game);
+
+					fwrite(&board_y, sizeof(int), 1, saved_game);
+
+					fwrite(&next_dice_text, sizeof(int), 1, saved_game);
+					fwrite(&key, sizeof(int), 1, saved_game);
+					fwrite(&unteleport, sizeof(int), 1, saved_game);
+					fwrite(&tocc, sizeof(int), 1, saved_game);
+					fwrite(&once, sizeof(int), 1, saved_game);
+					fwrite(&limitation_once, sizeof(int), 1, saved_game);
+					fwrite(&ccbs_p1, sizeof(int), 1, saved_game);
+					fwrite(&ccbs_p2, sizeof(int), 1, saved_game);
+
+					fwrite(&on_the_middle_p11, sizeof(int), 1, saved_game);
+					fwrite(&on_the_middle_p12, sizeof(int), 1, saved_game);
+					fwrite(&on_the_middle_p21, sizeof(int), 1, saved_game);
+					fwrite(&on_the_middle_p22, sizeof(int), 1, saved_game);
+
+					fwrite(&p11_flag, sizeof(int), 1, saved_game);
+					fwrite(&p12_flag, sizeof(int), 1, saved_game);
+					fwrite(&p21_flag, sizeof(int), 1, saved_game);
+					fwrite(&p22_flag, sizeof(int), 1, saved_game);
+
+					fwrite(&color, sizeof(int), 1, saved_game);
+
+					fputs(str_tas, saved_game);
+
+					fwrite(&tas_number, sizeof(int), 1, saved_game);
+					fwrite(&previous_a, sizeof(int), 1, saved_game);
+					fwrite(&two_a_before, sizeof(int), 1, saved_game);
+
+					fwrite(&limit_p11, sizeof(int), 1, saved_game);
+					fwrite(&limit_p12, sizeof(int), 1, saved_game);
+					fwrite(&limit_p21, sizeof(int), 1, saved_game);
+					fwrite(&limit_p22, sizeof(int), 1, saved_game);
+
+					fwrite(&player1_botton1, sizeof(struct button), 1, saved_game);
+					fwrite(&player1_botton2, sizeof(struct button), 1, saved_game);
+					fwrite(&player2_botton1, sizeof(struct button), 1, saved_game);
+					fwrite(&player2_botton2, sizeof(struct button), 1, saved_game);
+
+					fputs(chance_count[0], saved_game);
+					fputs(chance_count[1], saved_game);
+					fputs(chance_count[2], saved_game);
+					fputs(chance_count[3], saved_game);
+					fputs(chance_count[4], saved_game);
+					fputs(chance_count[5], saved_game);
+					fputs(chance_count[6], saved_game);
+					fputs(chance_count[7], saved_game);
+
+					fwrite(black_hole_sw, sizeof(int), 2, saved_game);
+					fwrite(chance_home_sw, sizeof(int), 6, saved_game);
+
+
+					fclose(saved_game);
+					swP = 1;
+				}
+
+
+				break;
+			case 9://choose player
+
+				al_draw_bitmap(ettehad, 0, 0, 0);
+				al_draw_rounded_rectangle(0, 0, 1700, 980, 8, 8, font_color, 12);
+
+				al_get_keyboard_state(&keyboard_state);
+				if (al_key_down(&keyboard_state, ALLEGRO_KEY_ENTER)) enter_sw = 1;
+
+				if (enter_sw == 1)
+				{
+					al_draw_bitmap(p_matau, 40, p_matau_y += 3, 0);
+					if (p_matau_y > 37)  p_matau_y = 37;
+					al_draw_bitmap(p_nokama, 410, p_nokama_y -= 5, 0);
+					if (p_nokama_y < 45) p_nokama_y = 45;
+					al_draw_bitmap(p_nuju, p_nuju_x -= 5, 40, 0);
+					if (p_nuju_x < 785) p_nuju_x = 785;
+					al_draw_bitmap(p_onewa, p_onewa_x += 3, 500, 0);
+					if (p_onewa_x > 37) p_onewa_x = 37;
+					al_draw_bitmap(p_vakama, 410, p_vakama_y += 4, 0);
+					if (p_vakama_y > 496) p_vakama_y = 496;
+					al_draw_bitmap(p_whenua, 780, p_whenua_y -= 4, 0);
+					if (p_whenua_y < 504) p_whenua_y = 504;
+
+					al_draw_rounded_rectangle(40, 40, 388, 480, 8, 8, font_color, 5);
+					al_draw_rounded_rectangle(410, 40, 758, 480, 8, 8, font_color, 5);
+					al_draw_rounded_rectangle(780, 40, 1128, 480, 8, 8, font_color, 5);
+					al_draw_rounded_rectangle(40, 500, 388, 940, 8, 8, font_color, 5);
+					al_draw_rounded_rectangle(410, 500, 758, 940, 8, 8, font_color, 5);
+					al_draw_rounded_rectangle(780, 500, 1128, 940, 8, 8, font_color, 5);
+
+					al_draw_bitmap(load_p_1, 1550, 40, 0);
+					al_draw_bitmap(load_p_2, 1550, 500, 0);
+
+					if (topp[0] == 1) al_draw_filled_rounded_rectangle(1550, 40, 1665, 184, 10, 10, color_1);
+					if (topp[1] == 1) al_draw_filled_rounded_rectangle(1550, 500, 1665, 644, 10, 10, color_2);
+
+					al_draw_rounded_rectangle(1550, 40, 1665, 184, 8, 8, font_color, 5);
+					al_draw_rounded_rectangle(1550, 500, 1665, 644, 8, 8, font_color, 5);
+
+
+					if (p_number == 1 && topp[0] == 0)
+					{
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_matau_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_2 != matoran_matau)
+							{
+								load_p_1 = matoran_matau;
+								color_1 = al_map_rgba(0, 90, 80, 1);
+								tas_color_1 = al_map_rgba_f(0, 0.35, 0.3, 0.7);
+								strcpy(str_p_1, "Matau");
+								player_11 = matau;
+								player_12 = matau;
+								matoran_1 = matoran_matau;
+								p_code_1 = 1;
+								p1_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_nokama_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_2 != matoran_nokama)
+							{
+								load_p_1 = matoran_nokama;
+								color_1 = al_map_rgba(10, 30, 170, 1);
+								tas_color_1 = al_map_rgba_f(0.15, 0.31, 0.6, 1);
+								strcpy(str_p_1, "Nokama");
+								player_11 = nokama;
+								player_12 = nokama;
+								matoran_1 = matoran_nokama;
+								p_code_1 = 2;
+								p1_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_nuju_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_2 != matoran_nuju)
+							{
+								load_p_1 = matoran_nuju;
+								color_1 = al_map_rgba(80, 80, 80, 1);
+								tas_color_1 = al_map_rgba_f(0.9, 0.9, 0.9, 1);
+								strcpy(str_p_1, "Nuju");
+								player_11 = nuju;
+								player_12 = nuju;
+								matoran_1 = matoran_nuju;
+								p_code_1 = 3;
+								p1_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_onewa_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_2 != matoran_onewa)
+							{
+								load_p_1 = matoran_onewa;
+								color_1 = al_map_rgba(142, 120, 44, 1);
+								tas_color_1 = al_map_rgba_f(1, 0.53, 0, 0.5);
+								strcpy(str_p_1, "Onewa");
+								player_11 = onewa;
+								player_12 = onewa;
+								matoran_1 = matoran_onewa;
+								p_code_1 = 4;
+								p1_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_vakama_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_2 != matoran_vakama)
+							{
+								load_p_1 = matoran_vakama;
+								color_1 = al_map_rgba(115, 40, 10, 1);
+								tas_color_1 = al_map_rgba_f(0.7, 0.02, 0.02, 1);
+								strcpy(str_p_1, "Vakama");
+								player_11 = vakama;
+								player_12 = vakama;
+								matoran_1 = matoran_vakama;
+								p_code_1 = 5;
+								p1_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_whenua_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_2 != matoran_whenua)
+							{
+								load_p_1 = matoran_whenua;
+								color_1 = al_map_rgba(15, 54, 54, 150);
+								tas_color_1 = al_map_rgba_f(0.06, 0.21, 0.21, 0.9);
+								strcpy(str_p_1, "Whenua");
+								player_11 = whenua;
+								player_12 = whenua;
+								matoran_1 = matoran_whenua;
+								p_code_1 = 6;
+								p1_ch = 1;
+							}
+
+
+					}
+
+					if (p_number == 2 && topp[1] == 0)
+					{
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_matau_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_1 != matoran_matau)
+							{
+								load_p_2 = matoran_matau;
+								color_2 = al_map_rgba(0, 90, 80, 1);
+								tas_color_2 = al_map_rgba_f(0, 0.35, 0.3, 0.7);
+								strcpy(str_p_2, "Matau");
+								player_21 = matau;
+								player_22 = matau;
+								matoran_2 = matoran_matau;
+								p_code_2 = 1;
+								p2_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_nokama_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_1 != matoran_nokama)
+							{
+								load_p_2 = matoran_nokama;
+								color_2 = al_map_rgba(10, 30, 170, 1);
+								tas_color_2 = al_map_rgba_f(0.15, 0.31, 0.6, 1);
+								strcpy(str_p_2, "Nokama");
+								player_21 = nokama;
+								player_22 = nokama;
+								matoran_2 = matoran_nokama;
+								p_code_2 = 2;
+								p2_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_nuju_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_1 != matoran_nuju)
+							{
+								load_p_2 = matoran_nuju;
+								color_2 = al_map_rgba(80, 80, 80, 1);
+								tas_color_2 = al_map_rgba_f(0.9, 0.9, 0.9, 1);
+								strcpy(str_p_2, "Nuju");
+								player_21 = nuju;
+								player_22 = nuju;
+								matoran_2 = matoran_nuju;
+								p_code_2 = 3;
+								p2_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_onewa_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_1 != matoran_onewa)
+							{
+								load_p_2 = matoran_onewa;
+								color_2 = al_map_rgba(142, 120, 44, 1);
+								tas_color_2 = al_map_rgba_f(1, 0.53, 0, 0.5);
+								strcpy(str_p_2, "Onewa");
+								player_21 = onewa;
+								player_22 = onewa;
+								matoran_2 = matoran_onewa;
+								p_code_2 = 4;
+								p2_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_vakama_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_1 != matoran_vakama)
+							{
+								load_p_2 = matoran_vakama;
+								color_2 = al_map_rgba(115, 40, 10, 1);
+								tas_color_2 = al_map_rgba_f(0.7, 0.02, 0.02, 1);
+								strcpy(str_p_2, "Vakama");
+								player_21 = vakama;
+								player_22 = vakama;
+								matoran_2 = matoran_vakama;
+								p_code_2 = 5;
+								p2_ch = 1;
+							}
+
+						al_get_mouse_state(&mouse_state);
+						if (area(&c9_p_whenua_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+							if (load_p_1 != matoran_whenua)
+							{
+								load_p_2 = matoran_whenua;
+								color_2 = al_map_rgba(15, 54, 54, 150);
+								tas_color_2 = al_map_rgba_f(0.06, 0.21, 0.21, 0.9);
+								strcpy(str_p_2, "Whenua");
+								player_21 = whenua;
+								player_22 = whenua;
+								matoran_2 = matoran_whenua;
+								p_code_2 = 6;
+								p2_ch = 1;
+							}
+
+
+					}
+
+
+					al_get_mouse_state(&mouse_state);
+					if (area(&c9_p1_text_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) {
+						p_number = 1;
+						al_draw_filled_rounded_rectangle(1320, 75, 1520, 135, 8, 8, font_color2);
+					}
+					al_get_mouse_state(&mouse_state);
+					if (area(&c9_p2_text_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) {
+						p_number = 2;
+						al_draw_filled_rounded_rectangle(1320, 535, 1520, 595, 8, 8, font_color2);
+					}
+
+					al_get_mouse_state(&mouse_state);
+					if (area(&c9_change, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1))
+						if (p1_ch == 1 && p2_ch == 1) if (topp[0] == 0 && topp[1] == 0) {
+
+							al_draw_filled_rounded_rectangle(1320, 295, 1520, 355, 8, 8, font_color2);
+
+							if (!sw_left_botton)
+							{
+								ALLEGRO_BITMAP* temp_load_p;
+								ALLEGRO_COLOR temp_color;
+								ALLEGRO_COLOR temp_tas_color;
+								char temp_str_p[10];
+								ALLEGRO_BITMAP* temp_player;
+								ALLEGRO_BITMAP* temp_matoran;
+								int temp_p_code;
+
+								temp_load_p = load_p_1;
+								temp_color = color_1;
+								temp_tas_color = tas_color_1;
+								strcpy(temp_str_p, str_p_1);
+								temp_player = player_11;
+								temp_matoran = matoran_1;
+								temp_p_code = p_code_1;
+
+								load_p_1 = load_p_2;
+								color_1 = color_2;
+								tas_color_1 = tas_color_2;
+								strcpy(str_p_1, str_p_2);
+								player_11 = player_21;
+								player_12 = player_22;
+								matoran_1 = matoran_2;
+								p_code_1 = p_code_2;
+
+								load_p_2 = temp_load_p;
+								color_2 = temp_color;
+								tas_color_2 = temp_tas_color;
+								strcpy(str_p_2, temp_str_p);
+								player_21 = temp_player;
+								player_22 = temp_player;
+								matoran_2 = temp_matoran;
+								p_code_2 = temp_p_code;
+
+
+								sw_left_botton = true;
+							}
+						}
+					if (!al_mouse_button_down(&mouse_state, 1)) sw_left_botton = false;
+
+
+					al_draw_rounded_rectangle(1320, 75, 1520, 135, 8, 8, font_color, 4);
+					al_draw_text(font_of_inside_menu, font_color, 1349, 72, 0, "player 1");
+
+					al_draw_rounded_rectangle(1320, 535, 1520, 595, 8, 8, font_color, 4);
+					al_draw_text(font_of_inside_menu, font_color, 1348, 532, 0, "player 2");
+
+					al_draw_rounded_rectangle(1320, 875, 1665, 940, 10, 10, font_color, 4.5);
+					al_draw_text(font_of_inside_menu, font_color, 1445, 875, 0, "home");
+
+					al_draw_rounded_rectangle(1320, 295, 1520, 355, 8, 8, font_color, 4);
+					al_draw_text(font_of_inside_menu, font_color, 1348, 295, 0, "change");
+
+
+					al_get_mouse_state(&mouse_state);
+					if (area(&c9_back, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) swP = 1;
+
+					al_get_mouse_state(&mouse_state);
+					if (area(&c9_load_p_1_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) if (p1_ch == 1) topp[0] = 1;
+					al_get_mouse_state(&mouse_state);
+					if (area(&c9_load_p_2_botton, &mouse_state) == 1) if (al_mouse_button_down(&mouse_state, 1)) if (p2_ch == 1) topp[1] = 1;
+
+
+					if (topp[0] == 1 && topp[1] == 1) {
+						al_get_keyboard_state(&keyboard_state);
+						if (al_key_down(&keyboard_state, ALLEGRO_KEY_ENTER)) swP = 2;
+					}
+
+				}
+
+
+				break;
+			}
+			al_flip_display();
+		}
+
+	}
+
+	al_destroy_display(display);
+	al_destroy_timer(timer);
+	al_uninstall_keyboard();
+	al_uninstall_mouse();
+
+	al_destroy_bitmap(first_page);
+	al_destroy_bitmap(board);
+	al_destroy_bitmap(menu);
+	al_destroy_bitmap(inside_menu);
+
+	al_destroy_bitmap(ettehad);
+	al_destroy_bitmap(load_p_1);
+	al_destroy_bitmap(load_p_2);
+
+	al_destroy_bitmap(p_matau);
+	al_destroy_bitmap(p_nokama);
+	al_destroy_bitmap(p_nuju);
+	al_destroy_bitmap(p_onewa);
+	al_destroy_bitmap(p_vakama);
+	al_destroy_bitmap(p_whenua);
+
+	al_destroy_bitmap(matoran_matau);
+	al_destroy_bitmap(matoran_nokama);
+	al_destroy_bitmap(matoran_nuju);
+	al_destroy_bitmap(matoran_onewa);
+	al_destroy_bitmap(matoran_vakama);
+	al_destroy_bitmap(matoran_whenua);
+
+	al_destroy_bitmap(matau);
+	al_destroy_bitmap(nokama);
+	al_destroy_bitmap(nuju);
+	al_destroy_bitmap(onewa);
+	al_destroy_bitmap(vakama);
+	al_destroy_bitmap(whenua);
+
+	al_destroy_bitmap(black_hole);
+	al_destroy_bitmap(card);
+	al_destroy_bitmap(web);
+	al_destroy_bitmap(end);
+	al_destroy_bitmap(win);
+
+
+	return 0;
+}
